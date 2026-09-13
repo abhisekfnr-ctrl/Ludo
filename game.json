@@ -1,0 +1,21 @@
+{
+  "P": 2,
+  "names": [
+    "Player 1",
+    "Player 2",
+    "Player 3",
+    "Player 4"
+  ],
+  "state": [],
+  "turn": 0,
+  "dice": 0,
+  "lastDice": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "mustMove": false,
+  "over": false,
+  "moving": false
+}
