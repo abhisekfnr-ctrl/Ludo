@@ -101,6 +101,47 @@ h1{margin:4px;color:#ffd52a;text-shadow:0 3px 5px #000;font-size:28px}
 <style>
 #auth{position:fixed;inset:0;background:#06142c;z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}.authbox{width:min(430px,100%);background:#062758;border:3px solid #ffd52a;border-radius:20px;padding:20px;text-align:center}.authbox input{width:100%;padding:12px;margin:6px 0;border-radius:9px;border:0;font-size:16px}.authrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.authmsg{min-height:24px;color:#ffe57b}.guestbtn{margin-top:10px;width:100%;background:linear-gradient(#16a34a,#08783b);border-color:#ffd52a}.guestnote{font-size:12px;opacity:.75;margin-top:8px}.lobby{position:fixed;inset:0;background:#06142c;z-index:9998;display:none;align-items:center;justify-content:center;padding:18px}.lobbybox{width:min(500px,100%);background:#062758;border:3px solid #1267bb;border-radius:20px;padding:20px;text-align:center}.lobbybox input{width:100%;padding:12px;margin:7px 0;border-radius:9px;border:0;font-size:16px}.roomcode{font-size:34px;color:#ffd52a;font-weight:900;letter-spacing:5px}.small{opacity:.8;font-size:13px}.onlinePlayers{margin:12px 0;text-align:left;background:#0b3973;padding:10px;border-radius:12px}
 </style>
+
+<style>
+.global-back-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 9999;
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.global-back-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+}
+</style>
+<script>
+function handleGlobalBack() {
+    if (confirm("क्या आप पीछे जाना (गेम/स्क्रीन छोड़ना) चाहते हैं?")) {
+        if (typeof socket !== 'undefined' && socket) {
+            try { socket.send(JSON.stringify({ type: 'leaveRoom' })); } catch(e){}
+        }
+        if (document.getElementById('game-screen')) document.getElementById('game-screen').style.display = 'none';
+        if (document.getElementById('room-screen')) document.getElementById('room-screen').style.display = 'none';
+        if (document.getElementById('lobby-screen')) document.getElementById('lobby-screen').style.display = 'none';
+        if (document.getElementById('main-menu')) document.getElementById('main-menu').style.display = 'block';
+        window.location.reload();
+    }
+}
+</script>
+
 </head>
 <body><div id="auth"><div class="authbox"><h1>👑 ROYAL LUDO</h1><p>Online khelne ke liye account banayein ya login karein.</p><input id="au" placeholder="Username"><input id="ap" type="password" placeholder="Password"><div class="authrow"><button class="btn" onclick="doAuth('login')">LOGIN</button><button class="btn" onclick="doAuth('register')">REGISTER</button></div><button class="btn guestbtn" onclick="startGuest()">👤 GUEST MODE — LOGIN KE BINA KHELE</button><div class="guestnote">Guest mode me account ki zarurat nahi. Game isi device par chalega.</div><div class="authmsg" id="authmsg"></div></div></div><div id="announcementBar" style="display:none;position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:10001;background:#ffd52a;color:#111;padding:10px 14px;border-radius:12px;font-weight:800;max-width:92%;box-shadow:0 5px 20px #0008"></div><div id="lobby" class="lobby"><div class="lobbybox"><h1>🎮 ONLINE LOBBY</h1><p id="welcome"></p><button class="btn" onclick="createRoom(2)">CREATE 2 PLAYER</button> <button class="btn" onclick="createRoom(4)">CREATE 4 PLAYER</button><hr><input id="roomInput" placeholder="Room Code (e.g. A1B2C3)"><button class="btn" onclick="joinRoom()">JOIN ROOM</button><div class="onlinePlayers" id="players">Room join karne ke baad players yahan dikhenge.</div><div class="small">Apna room code dost ko bhejkar use join karayein.</div></div></div>
 
