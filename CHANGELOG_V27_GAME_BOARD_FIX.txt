@@ -1,0 +1,11 @@
+ROYAL LUDO v27 - GAME BOARD / ONLINE GUEST FIX
+
+Main issue fixed:
+- Guest Mode was incorrectly treated as local-only in syncGame() and publishGame().
+- Online guest players could create/join a room, but the game board would never open because syncGame() returned immediately when GUEST_MODE was true.
+
+Fixes:
+1. Online guest sessions now sync room/game state normally whenever a ROOM exists.
+2. Game publishing is allowed for online guest players when they are in a room.
+3. When a room reaches playing status, the lobby is automatically hidden and the game board is shown.
+4. Existing v26 server fixes remain included: room status changes to playing at capacity, initialized game state, safer game-state writes, admin fixes, etc.
