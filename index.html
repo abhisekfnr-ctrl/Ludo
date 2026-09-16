@@ -478,7 +478,7 @@ function build(){
 }
 function say(x){document.getElementById('info').textContent=x}
 async function roll(){
- if(isAdmin || adminPaused || over||mustMove||rolling || (!GUEST_MODE && MY_MY_PLAYER_INDEX!==turn))return;
+ if(isAdmin || adminPaused || over||mustMove||rolling || MY_MY_PLAYER_INDEX!==turn)return;
  rolling=true; render();
  let forced=0;
  if(!GUEST_MODE){
@@ -509,7 +509,7 @@ async function roll(){
 function rollFor(p){
   // Only the active player's own dice can be rolled.
   normalizeGame();
-  if(over || moving || mustMove || rolling || p !== turn || p < 0 || p >= P || (!GUEST_MODE && MY_MY_PLAYER_INDEX!==p)) return;
+  if(over || moving || mustMove || rolling || p !== turn || p < 0 || p >= P || MY_MY_PLAYER_INDEX!==p) return;
   roll();
 }
 
@@ -523,7 +523,7 @@ function legal(p,t){
  let x=state[p][t];if(x>=57)return false;if(x<0)return dice===6;return x+dice<=57;
 }
 async function move(p,t){
- if(isAdmin || over||moving||!mustMove||p!==turn||!legal(p,t)||(!GUEST_MODE && MY_MY_PLAYER_INDEX!==p))return;
+ if(isAdmin || over||moving||!mustMove||p!==turn||!legal(p,t)||MY_MY_PLAYER_INDEX!==p)return;
  const rolled=dice;
  let from=state[p][t];
  const target=from<0?0:from+rolled;
