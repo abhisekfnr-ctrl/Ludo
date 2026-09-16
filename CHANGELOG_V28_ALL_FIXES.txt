@@ -1,0 +1,4 @@
+Royal Ludo Online v28 Updates:
+1. Room join fixed - game board automatically loads and renders upon room entry.
+2. Universal Back Button (पीछे जाने वाला बटन) added across all screens and game board.
+3. Socket connection & screen state transition bug fixes.
