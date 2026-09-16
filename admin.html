@@ -1,0 +1,66 @@
+<!doctype html><html lang="hi"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Royal Ludo Admin v25</title>
+<style>
+*{box-sizing:border-box}body{font-family:Arial;background:#101010;color:#fff;padding:12px;max-width:1200px;margin:auto}h1{color:#ffd52a}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.stat,.card{background:#222;padding:15px;border-radius:14px;margin:10px 0}.stat b{font-size:25px;color:#ffd52a}.btn{padding:9px 11px;border:0;border-radius:8px;margin:3px;font-weight:bold;cursor:pointer;background:#ffd52a;color:#111}.danger{background:#e33;color:#fff}.green{background:#159447;color:#fff}.blue{background:#2778e6;color:#fff}.muted{opacity:.7;font-size:13px}.table{width:100%;border-collapse:collapse;min-width:720px}.table td,.table th{padding:8px;border-bottom:1px solid #444;text-align:left;font-size:13px}.scroll{overflow:auto}.login{max-width:400px;margin:80px auto}.login input,.announce input{width:100%;padding:12px;margin:7px 0;box-sizing:border-box;border:0;border-radius:8px}.hide{display:none}.tag{display:inline-block;padding:4px 7px;border-radius:999px;background:#444;font-size:11px}.controls{white-space:nowrap}.roomCard{background:#181818;border:1px solid #444;border-radius:14px;padding:12px;margin:10px 0}.roomHead{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center}.roomPlayers{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-top:10px}.playerBox{background:#252525;padding:10px;border-radius:10px}.diceCtl{display:flex;gap:5px;align-items:center;flex-wrap:wrap}.diceCtl select{padding:7px;border-radius:7px}.stateBox{font-size:12px;opacity:.9;word-break:break-word;margin-top:7px}.liveBadge{color:#54e38e;font-weight:bold}.roomBtns{margin-top:10px}@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.stat b{font-size:21px}}
+</style>
+<h1>👑 Royal Ludo Admin <span class="tag">v25</span></h1>
+<div id="login" class="card login"><h2>Admin Login</h2><input id="pw" type="password" placeholder="Admin password"><button class="btn" onclick="login()">LOGIN</button><p id="msg"></p></div>
+<main id="app" class="hide">
+<div class="grid"><div class="stat">Users<br><b id="users">0</b></div><div class="stat">Online<br><b id="online">0</b></div><div class="stat">Rooms<br><b id="rooms">0</b></div><div class="stat">Running<br><b id="running">0</b></div><div class="stat">Games<br><b id="games">0</b></div></div>
+<div class="card"><h2>📢 Announcement</h2><div class="announce"><input id="announcement" maxlength="500" placeholder="Players ke liye message..."></div><button class="btn" onclick="sendAnnouncement()">SEND ANNOUNCEMENT</button> <span id="as"></span></div>
+<div class="card"><h2>👥 Users</h2><div class="scroll"><table class="table"><thead><tr><th>Username</th><th>Games</th><th>Wins</th><th>Last Active</th><th>Status</th><th>Action</th></tr></thead><tbody id="ut"></tbody></table></div></div>
+<div class="card"><h2>🎮 Live Rooms — Full Control</h2>
+<p class="muted">Room select karke live state dekho. Player-wise Next Dice 1–6 set karo. Random se force hatao. Force Turn se active player badal sakte ho.</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+<select id="roomFilter" style="padding:10px;border-radius:8px"><option value="">All rooms</option></select>
+<button class="btn blue" onclick="show()">↻ Refresh</button>
+</div>
+<div id="rt"></div></div>
+<div class="card"><h2>📜 Game History</h2><div class="scroll"><table class="table"><thead><tr><th>Room</th><th>Players</th><th>Winner</th><th>Ended</th></tr></thead><tbody id="ht"></tbody></table></div></div>
+</main>
+<script>
+let T=localStorage.getItem('royal_admin');
+async function api(p,o={}){o.headers={...(o.headers||{}),'Content-Type':'application/json',...(T?{Authorization:'Bearer '+T}:{})};let r=await fetch(p,o),x=await r.json().catch(()=>({}));if(!r.ok)throw Error(x.error||'Error');return x}
+async function login(){try{let x=await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:pw.value})});T=x.token;localStorage.setItem('royal_admin',T);show()}catch(e){msg.textContent='❌ '+e.message}}
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+async function show(){try{let x=await api('/api/admin/data');login.style.display='none';app.classList.remove('hide');users.textContent=x.stats.users;online.textContent=x.stats.online;rooms.textContent=x.stats.rooms;running.textContent=x.stats.running;games.textContent=x.stats.games;
+ ut.innerHTML=x.users.map(u=>'<tr><td>'+esc(u.username)+'</td><td>'+u.games+'</td><td>'+u.wins+'</td><td>'+new Date(u.lastActive).toLocaleString()+'</td><td><span class="tag">'+(!u.blocked?'Active':'Blocked')+'</span></td><td><button class="btn '+(!u.blocked?'danger':'green')+'" onclick="block(\''+u.id+'\','+(!u.blocked)+')">'+(!u.blocked?'Block':'Unblock')+'</button> <button class="btn danger" onclick="delUser(\''+u.id+'\',\''+esc(u.username)+'\')">Delete</button></td></tr>').join('')||'<tr><td colspan="6">No users</td></tr>';
+ const filter=(document.getElementById('roomFilter')||{}).value||'';
+ const filteredRooms=x.rooms.filter(r=>!filter||r.code===filter);
+ const rf=document.getElementById('roomFilter');
+ if(rf){const cur=filter; rf.innerHTML='<option value="">All rooms</option>'+x.rooms.map(r=>'<option value="'+esc(r.code)+'">'+esc(r.code)+' ('+esc(r.status)+')</option>').join('');rf.value=cur;}
+ rt.innerHTML=filteredRooms.map(r=>{
+  const g=r.game||{}, turn=Number(g.turn)||0, ad=Array.isArray(r.adminDice)?r.adminDice:[0,0,0,0];
+  const players=Array.from({length:r.P},(_,i)=>{
+    const pl=r.players.find(q=>q.index===i); const st=Array.isArray(g.state)&&Array.isArray(g.state[i])?g.state[i].join(', '):'not started';
+    const opts=['Random',1,2,3,4,5,6].map((z,j)=>'<option value="'+j+'" '+(j===ad[i]?'selected':'')+'>'+z+'</option>').join('');
+    return '<div class="playerBox"><b>Player '+(i+1)+'</b> '+(pl?'— '+esc(pl.username):'— Empty')+
+      '<br><span class="muted">Position: '+esc(st)+'</span>'+
+      '<div class="diceCtl"><select id="rd_'+esc(r.code)+'_'+i+'">'+opts+'</select>'+
+      '<button class="btn" onclick="setRoomDice(\''+r.code+'\','+i+')">Set Next Dice</button>'+
+      (pl?'<button class="btn danger" onclick="kick(\''+r.code+'\',\''+pl.userId+'\')">🚫 Kick</button>':'')+'</div></div>';
+  }).join('');
+  return '<div class="roomCard"><div class="roomHead"><div><b>🏠 Room '+esc(r.code)+'</b> <span class="tag">'+esc(r.status)+'</span> '+(r.status==='playing'?'<span class="liveBadge">● LIVE</span>':'')+
+    '</div><div>Turn: <b>Player '+(turn+1)+'</b> · Dice: <b>'+(Number(g.dice)||0)+'</b> · Last: <b>'+esc(JSON.stringify(g.lastDice||[]))+'</b></div></div>'+
+    '<div class="roomPlayers">'+players+'</div>'+
+    '<div class="stateBox">Game state: '+(Array.isArray(g.state)?esc(JSON.stringify(g.state)):'not started')+'</div>'+
+    '<div class="roomBtns">'+
+    '<button class="btn green" onclick="openLive(\''+r.code+'\')">👀 Open Live Board</button>'+
+    '<button class="btn blue" onclick="roomAction(\''+r.code+'\',\''+(r.status==='paused'?'resume':'pause')+'\')">'+(r.status==='paused'?'▶ Resume':'⏸ Pause')+'</button>'+
+    '<button class="btn" onclick="forceTurn(\''+r.code+'\')">🎯 Force Turn</button>'+
+    '<button class="btn" onclick="roomAction(\''+r.code+'\',\'clear-dice\')">🧹 Clear Dice</button>'+
+    '<button class="btn" onclick="roomAction(\''+r.code+'\',\'reset\')">🔄 Reset</button>'+
+    '<button class="btn danger" onclick="roomAction(\''+r.code+'\',\'close\')">❌ Close Room</button>'+
+    '</div></div>'
+ }).join('')||'<div class="muted">No rooms match this filter</div>';
+ ht.innerHTML=x.history.map(h=>'<tr><td>'+esc(h.room)+'</td><td>'+esc((h.players||[]).join(', '))+'</td><td>'+esc(((h.names||[])[h.winner])||('Player '+(h.winner+1)))+'</td><td>'+new Date(h.endedAt).toLocaleString()+'</td></tr>').join('')||'<tr><td colspan="4">No games yet</td></tr>';
+ }catch(e){localStorage.removeItem('royal_admin');T='';login.style.display='block';app.classList.add('hide')}}
+async function block(id,b){try{await api('/api/admin/user',{method:'POST',body:JSON.stringify({id,blocked:b})});show()}catch(e){alert(e.message)}}
+async function delUser(id,name){if(!confirm('Delete user '+name+'?'))return;try{await api('/api/admin/user-delete',{method:'POST',body:JSON.stringify({id})});show()}catch(e){alert(e.message)}}
+async function roomAction(room,action){let q=action==='close'?'Close room?':action==='reset'?'Reset this game?':action==='pause'?'Pause this game?':action==='resume'?'Resume this game?':action==='clear-dice'?'Clear all forced dice?':'Continue?';if(!confirm(q))return;try{await api('/api/admin/room',{method:'POST',body:JSON.stringify({room,action})});show()}catch(e){alert(e.message)}}
+function openLive(room){window.open('/?admin=1&room='+encodeURIComponent(room),'_blank')}
+async function kick(room,userId){if(!confirm('Is player ko room se kick karein?'))return;try{await api('/api/admin/room',{method:'POST',body:JSON.stringify({room,action:'kick',userId})});show()}catch(e){alert(e.message)}}
+async function forceTurn(room){const p=prompt('Player number (1-4)');if(p===null)return;const n=Number(p)-1;if(!Number.isInteger(n)||n<0||n>3){alert('Player 1-4 choose karein');return;}try{await api('/api/admin/room',{method:'POST',body:JSON.stringify({room,action:'force-turn',player:n})});show()}catch(e){alert(e.message)}}
+async function setRoomDice(room,player){const el=document.getElementById('rd_'+room+'_'+player);const value=Number(el.value)||0;try{await api('/api/admin/room-dice',{method:'POST',body:JSON.stringify({room,player,value})});show()}catch(e){alert(e.message)}}
+async function sendAnnouncement(){let text=announcement.value.trim();if(!text)return;try{await api('/api/admin/announcement',{method:'POST',body:JSON.stringify({text})});as.textContent=' ✅ Sent';announcement.value='';setTimeout(()=>as.textContent='',1500)}catch(e){alert(e.message)}}
+if(T)show();setInterval(()=>{if(T&&!app.classList.contains('hide'))show()},800);
+</script></html>
